@@ -10,6 +10,10 @@ const userSchema =mongoose.Schema(
             type:String,
             require:true
         },
+        number:{
+            type:String,
+            require:true,
+        },
 
 
     }
