@@ -3,10 +3,12 @@ const mongoose =require('mongoose')
 const cors=require('cors')
 require('dotenv').config()
 const router =require('./Route/Route')
-
+const fileUpload =require('express-fileupload')
 
 const app=express()
 app.use(cors())
+app.use(fileUpload())
+
 // const uschema =mongoose.Schema({})
 // const userModel=mongoose.model('user',uschema)
 

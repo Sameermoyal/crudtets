@@ -4,15 +4,28 @@ const userSchema =mongoose.Schema(
     {
         name:{
             type:String,
-            require:true
+            required:true
         },
         email:{
             type:String,
-            require:true
+            required:true
         },
         number:{
             type:String,
-            require:true,
+            required:true,
+        },
+        number:{
+            type:String,
+            required:true,
+        },
+       
+        otp:{
+            type:String,
+            required:true,
+        },
+        aadhar:{
+            type:String,
+            required:true,
         },
 
 

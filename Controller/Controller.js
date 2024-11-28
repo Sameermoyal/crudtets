@@ -3,6 +3,47 @@ const userModel =require('../Model/Model')
 const bcrypt =require('bcrypt')
 const secretKey ='ghvgh vyvygvvuu vyjbvbbbvjgjfvchg'
 const jwt =require('jsonwebtoken')
+const {uploadFile} =require('../utility/cloudinaryService')
+
+const generateOtp=async()=>{
+   const num= Math.random()
+ return  Math.floor(num*1000000).toString();
+}
+
+exports.createUSer=async(req,res)=>{
+    const data= req.body;
+
+    const fileUpload =await uploadFile(req.files) 
+    console.log('>>>>filesUpload>>',fileUpload[0].url)
+    const randomOtp =await generateOtp();
+    console.log('>>>>>>>>>randomOtp>>',randomOtp)
+   
+    
+ 
+     const{name,email,number}=req.body;
+     console.log(">>>>>>>>>>>>>>name>>",name,email)
+     if (!name || !email || !number) {
+         return res.status(400).json({ message: "All fields are required." });
+       }
+ 
+     const userEmail=await userModel.findOne({email})
+     if(userEmail){
+         res.status(200).json({message:"email alresdy register"})
+     }
+     const salt=bcrypt.genSaltSync(10);
+     const hash=bcrypt.hashSync(number,salt)
+     const udata={
+         name,
+         email,
+         number:hash,
+         aadhar:fileUpload[0].url,
+         otp:randomOtp
+     };
+     const userData= new userModel(udata);
+     await userData.save();
+ 
+     res.status(200).json({message:"user created successfully"})
+ }
 
 exports.getAllUser=async(req,res)=>{
     const userData =await userModel.find()
@@ -22,27 +63,7 @@ exports.getOneUser=async(req,res)=>{
 
 }
 
-exports.createUSer=async(req,res)=>{
-    const{name,email,number}=req.body;
-    console.log(">>>>>>>>>>>>>>name>>",name,email)
-    if (!name || !email || !number) {
-        return res.status(400).json({ message: "All fields are required." });
-      }
 
-    const userEmail=await userModel.findOne({email})
-    if(userEmail){
-        res.status(200).json({message:"email alresdy register"})
-    }
-    const salt=bcrypt.genSaltSync(10);
-    const hash=bcrypt.hashSync(number,salt)
-    const data={
-        name,email,number:hash
-    };
-    const userData= new userModel(data);
-    await userData.save();
-
-    res.status(200).json({message:"user created successfully"})
-}
 
 exports.userLogin =async(req,res)=>{
     try{
