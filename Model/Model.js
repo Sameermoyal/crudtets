@@ -10,24 +10,20 @@ const userSchema =mongoose.Schema(
             type:String,
             required:true
         },
-        number:{
+        password:{
             type:String,
             required:true,
         },
-        number:{
-            type:String,
-            required:true,
-        },
-       
         otp:{
             type:String,
             required:true,
         },
+        
         aadhar:{
             type:String,
             required:true,
         },
-
+        signupTime: { type: Date, default: Date.now },
 
     }
 )
