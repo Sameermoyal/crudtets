@@ -16,13 +16,14 @@ const userSchema =mongoose.Schema(
         },
         otp:{
             type:String,
-            required:true,
+            required:null,
         },
         
         aadhar:{
             type:String,
-            required:true,
+            required:false,
         },
+        
         signupTime: { type: Date, default: Date.now },
 
     }

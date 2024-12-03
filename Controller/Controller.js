@@ -5,6 +5,8 @@ const secretKey ='ghvgh vyvygvvuu vyjbvbbbvjgjfvchg'
 const jwt =require('jsonwebtoken')
 const {uploadFile} =require('../utility/cloudinaryService')
 const moment = require('moment'); 
+const loginModel =require('../Model/loginDetails')
+
 
 
 const generateOtp=async()=>{
@@ -14,6 +16,7 @@ const generateOtp=async()=>{
 
 exports.createUSer=async(req,res)=>{
     const data= req.body;
+
       console.log("req.body>>>>>",req.body)
     const fileUpload =await uploadFile(req.files) 
     console.log('>>>>filesUpload>>',fileUpload[0].url)
@@ -68,6 +71,9 @@ exports.getOneUser=async(req,res)=>{
 
 exports.userLogin =async(req,res)=>{
     try{
+     
+      console.log('>>>>>>>req.user>>',req.user);
+
      const{email,password,otp}=req.body;
     
      console.log("<<<<email",email)
@@ -80,7 +86,7 @@ exports.userLogin =async(req,res)=>{
      const currentTime = new Date();
      const timeDiff = (currentTime - signupTime) / (1000 * 60); 
 
-     if (timeDiff > 1) {
+     if (timeDiff > 15) {
          return res.status(401).json({ message: "Login expired. Please sign up again." });
      }
 
@@ -132,3 +138,137 @@ exports.updateUser=async(req,res)=>{
 
     res.status(200).json(userEmail)
 }
+
+
+
+
+
+
+
+
+exports.createUser=async(req,res)=>{
+    const data= req.body;
+
+      
+    const randomOtp =await generateOtp();
+    console.log('>>>>>>>>>randomOtp>>',randomOtp)
+   
+    const{name,email,password}=req.body;
+     console.log(">>>>>>>>>>>>>>name>>",name,email)
+     if (!name || !email || !password) {
+         return res.status(400).json({ message: "All fields are required." });
+       }
+ 
+     const userEmail=await userModel.findOne({email})
+     if(userEmail){
+         res.status(200).json({message:"email alresdy register"})
+     }
+     const salt=bcrypt.genSaltSync(10);
+     const hash=bcrypt.hashSync(password,salt)
+     const udata={
+         name,
+         email,
+         password:hash,
+       
+         otp:randomOtp
+     };
+     const userData= new userModel(udata);
+     await userData.save();
+     
+     const newloginCount = new loginModel(
+        {
+            userId:userData._id
+        }
+     )
+     await newloginCount.save()
+ 
+     res.status(200).json({message:"user created successfully"})
+ }
+
+
+
+
+ exports.login = async (req, res) => {
+    try {
+        const { email, password, otp } = req.body;
+        console.log("Input email:", email);
+      
+        const userDetail = await userModel.findOne({ email });
+        console.log("User details:", userDetail);
+
+        if (!userDetail) {
+            return res.status(400).json({ message: "Please sign up, this email is not registered." });
+        }
+
+        const signupTime = userDetail.signupTime;
+        if (!signupTime) {
+            return res.status(400).json({ message: "Signup time not found for this user." });
+        }
+
+        const currentTime = new Date();
+        const timeDiff = (currentTime - signupTime) / (1000 * 60);
+        console.log("Time difference (minutes):", timeDiff);
+
+        if (timeDiff > 15) {
+            return res.status(401).json({ message: "Login expired. Please sign up again." });
+        }
+
+        const databasePassword = userDetail.password;
+        console.log("Database password:", databasePassword);
+
+        const match = await bcrypt.compare(password, databasePassword);
+        if (!match) {
+            return res.status(400).json({ message: "Invalid Password" });
+        }
+
+        const userOTP = userDetail.otp;
+        console.log("User OTP from DB:", userOTP, "Provided OTP:", otp);
+
+        if (userOTP !== otp) {
+            return res.status(401).json({ message: "Invalid OTP" });
+        }
+
+       
+        userDetail.otp = "";
+        await userDetail.save();
+
+        // userDetail.count+=1
+        // userDetail.save()
+
+    const loginCount =await loginModel.findOne({userId :userDetail._id})
+    
+        loginCount.count+=1;
+
+       
+   const uCount=loginCount.count;
+        
+        await loginCount.save()     
+
+        const token = jwt.sign(
+            { id: userDetail._id },
+            secretKey,
+            { expiresIn: "1m" }
+        );
+
+        return res.status(200).json({ message: "Successfully logged in", token ,uCount});
+    } catch (err) {
+        console.error("Error during login:", err);
+        return res.status(500).json({ message: "Internal server error", error: err.message });
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 
